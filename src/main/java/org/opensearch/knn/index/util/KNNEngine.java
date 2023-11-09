@@ -16,18 +16,23 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import lombok.extern.log4j.Log4j2;
+
 import static org.opensearch.knn.common.KNNConstants.FAISS_NAME;
 import static org.opensearch.knn.common.KNNConstants.LUCENE_NAME;
 import static org.opensearch.knn.common.KNNConstants.NMSLIB_NAME;
+import static org.opensearch.knn.common.KNNConstants.PYNN_NAME;
 
 /**
  * KNNEngine provides the functionality to validate and transform user defined indices into information that can be
  * passed to the respective k-NN library's JNI layer.
  */
+@Log4j2
 public enum KNNEngine implements KNNLibrary {
     NMSLIB(NMSLIB_NAME, Nmslib.INSTANCE),
     FAISS(FAISS_NAME, Faiss.INSTANCE),
-    LUCENE(LUCENE_NAME, Lucene.INSTANCE);
+    LUCENE(LUCENE_NAME, Lucene.INSTANCE),
+    PYNN(PYNN_NAME, PyNNlib.INSTANCE);
 
     public static final KNNEngine DEFAULT = NMSLIB;
 
@@ -36,6 +41,8 @@ public enum KNNEngine implements KNNLibrary {
 
     private static Map<KNNEngine, Integer> MAX_DIMENSIONS_BY_ENGINE = Map.of(
         KNNEngine.NMSLIB,
+        16_000,
+        KNNEngine.PYNN,
         16_000,
         KNNEngine.FAISS,
         16_000,
@@ -76,7 +83,13 @@ public enum KNNEngine implements KNNLibrary {
             return LUCENE;
         }
 
-        throw new IllegalArgumentException(String.format("Invalid engine type: %s", name));
+        if (PYNN.getName().equalsIgnoreCase(name)) {
+            return PYNN;
+        }
+
+        log.info("Name of pynn" + PYNN.getName());
+
+        throw new IllegalArgumentException(String.format("Invalid engine type: %s%s", name, PYNN.getName()));
     }
 
     /**

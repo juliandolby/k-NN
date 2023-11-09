@@ -174,6 +174,7 @@ dependencies {
     api group: 'com.google.guava', name: 'failureaccess', version:'1.0.1'
     api group: 'com.google.guava', name: 'guava', version:'32.0.1-jre'
     api group: 'commons-lang', name: 'commons-lang', version: '2.6'
+    api group: 'black.ninia', name: 'jep', version: '4.1.1'
     testFixturesImplementation "org.opensearch.test:framework:${opensearch_version}"
     testImplementation group: 'net.bytebuddy', name: 'byte-buddy', version: '1.14.7'
     testImplementation group: 'org.objenesis', name: 'objenesis', version: '3.2'

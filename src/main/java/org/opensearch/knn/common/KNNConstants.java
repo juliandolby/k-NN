@@ -81,6 +81,8 @@ public class KNNConstants {
     public static final String FAISS_FLAT_DESCRIPTION = "Flat";
     public static final String FAISS_PQ_DESCRIPTION = "PQ";
 
+    public static final String PYNN_NAME = "pynn";
+
     // Parameter defaults/limits
     public static final Integer ENCODER_PARAMETER_PQ_CODE_COUNT_DEFAULT = 1;
     public static final Integer ENCODER_PARAMETER_PQ_CODE_COUNT_LIMIT = 1024;
