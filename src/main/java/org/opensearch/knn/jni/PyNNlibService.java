@@ -72,7 +72,7 @@ class PyNNlibService {
     public static void createIndex(int[] ids, float[][] data, String indexPath, Map<String, Object> parameters) {
         subInterp.set("data", data);
         subInterp.eval("data = np.array(data)");
-        subInterp.eval("index = pynndescent.NNDescent(data)");
+        subInterp.eval("index = pynndescent.NNDescent(data,metric='hamming')");
         subInterp.set("indexPath", indexPath);
         subInterp.eval("with open(indexPath, 'wb') as f:\n   pickle.dump(index, f)");
     }
