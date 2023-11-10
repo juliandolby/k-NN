@@ -102,7 +102,7 @@ class PyNNlibService {
      */
     public static KNNQueryResult[] queryIndex(long indexPointer, float[] queryVector, int k) {
         subInterp.set("qv", queryVector);
-        subInterp.eval("index = indexes[" + indexPtr + "]");
+        subInterp.eval("index = indexes[" + indexPointer + "]");
         subInterp.eval("queryVector = np.array([qv])");
         subInterp.eval("ans = index.query(queryVector)");
         List<NDArray<?>> result = (List<NDArray<?>>)subInterp.getValue("ans");
