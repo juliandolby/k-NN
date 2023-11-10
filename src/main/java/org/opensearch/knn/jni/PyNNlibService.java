@@ -14,6 +14,8 @@ package org.opensearch.knn.jni;
 import org.opensearch.knn.index.query.KNNQueryResult;
 
 import java.util.Map;
+import java.util.Arrays;
+import java.util.List;
 
 import jep.JepConfig;
 import jep.MainInterpreter;
@@ -72,7 +74,7 @@ class PyNNlibService {
         subInterp.eval("data = np.array(data)");
         subInterp.eval("index = pynndescent.NNDescent(data)");
         subInterp.set("indexPath", indexPath);
-        subInterp.eval("with open(indexPath, 'w') as f pickle.dump(f, index)");
+        subInterp.eval("with open(indexPath, 'wb') as f:\n   pickle.dump(index, f)");
     }
 
     /**
@@ -85,7 +87,7 @@ class PyNNlibService {
     public static long loadIndex(String indexPath, Map<String, Object> parameters) {
         subInterp.set("indexPath", indexPath);
         subInterp.eval("indexCounter += 1");
-        subInterp.eval("with open(indexPath, 'rb') as f indexes[indexCounter] = pickle.load(f)");
+        subInterp.eval("with open(indexPath, 'rb') as f:\n   indexes[indexCounter] = pickle.load(f)");
         subInterp.eval("index.prepare()");
         return ((Number)subInterp.getValue("indexCounter")).longValue();
     }
@@ -99,10 +101,11 @@ class PyNNlibService {
      * @return KNNQueryResult array of k neighbors
      */
     public static KNNQueryResult[] queryIndex(long indexPointer, float[] queryVector, int k) {
-
-        @SuppressWarnings("unchecked")
-
-        List<NDArray<?>> result = (List<NDArray<?>>) subInterp.invoke("index.query", new NDArray(queryVector, 1, queryVector.length));
+        subInterp.set("qv", queryVector);
+        subInterp.eval("index = indexes[" + indexPtr + "]");
+        subInterp.eval("queryVector = np.array([qv])");
+        subInterp.eval("ans = index.query(queryVector)");
+        List<NDArray<?>> result = (List<NDArray<?>>)subInterp.getValue("ans");
         assert result.size() == 2;
         int nodes = result.get(0).getDimensions()[0];
         int neighbors = result.get(0).getDimensions()[1];
@@ -116,7 +119,6 @@ class PyNNlibService {
                 );
             }
         }
-
         return answers[0];
     }
 
