@@ -48,6 +48,15 @@ class PyNNlibService {
 
         subInterp.eval("from pynd import *");
 
+        subInterp.eval("import pickle");
+
+        subInterp.eval("import numpy as np");
+
+        subInterp.eval("indexes = {}");
+
+        subInterp.eval("indexCounter = 0");
+
+
     }
 
     /**
@@ -58,7 +67,13 @@ class PyNNlibService {
      * @param indexPath path to save index file to
      * @param parameters parameters to build index
      */
-    public static native void createIndex(int[] ids, float[][] data, String indexPath, Map<String, Object> parameters);
+    public static void createIndex(int[] ids, float[][] data, String indexPath, Map<String, Object> parameters) {
+        subInterp.set("data", data);
+        subInterp.eval("data = np.array(data)");
+        subInterp.eval("index = pynndescent.NNDescent(data)");
+        subInterp.set("indexPath", indexPath);
+        subInterp.eval("with open(indexPath, 'w') as f pickle.dump(f, index)");
+    }
 
     /**
      * Load an index into memory
@@ -67,7 +82,13 @@ class PyNNlibService {
      * @param parameters parameters to be used when loading index
      * @return pointer to location in memory the index resides in
      */
-    public static native long loadIndex(String indexPath, Map<String, Object> parameters);
+    public static long loadIndex(String indexPath, Map<String, Object> parameters) {
+        subInterp.set("indexPath", indexPath);
+        subInterp.eval("indexCounter += 1");
+        subInterp.eval("with open(indexPath, 'rb') as f indexes[indexCounter] = pickle.load(f)");
+        subInterp.eval("index.prepare()");
+        return ((Number)subInterp.getValue("indexCounter")).longValue();
+    }
 
     /**
      * Query an index
