@@ -11,6 +11,7 @@
 
 package org.opensearch.knn.jni;
 
+import lombok.extern.log4j.Log4j2;
 import org.opensearch.knn.index.query.KNNQueryResult;
 
 import java.util.Map;
@@ -31,6 +32,7 @@ import java.util.*;
  *      src/main/java/org/opensearch/knn/index/KNNQueryResult.java
  *      src/main/java/org/opensearch/knn/common/KNNConstants.java
  */
+@Log4j2
 class PyNNlibService {
 
     private static SharedInterpreter subInterp;
@@ -70,11 +72,13 @@ class PyNNlibService {
      * @param parameters parameters to build index
      */
     public static void createIndex(int[] ids, float[][] data, String indexPath, Map<String, Object> parameters) {
+        log.info("called create index with:" + indexPath);
         subInterp.set("data", data);
         subInterp.eval("data = np.array(data)");
         subInterp.eval("index = pynndescent.NNDescent(data,metric='hamming')");
         subInterp.set("indexPath", indexPath);
         subInterp.eval("with open(indexPath, 'wb') as f:\n   pickle.dump(index, f)");
+        log.info("finished create index with:");
     }
 
     /**
