@@ -37,6 +37,11 @@ public class JNIService {
             return;
         }
 
+        if (KNNEngine.PYNN.getName().equals(engineName)) {
+            PyNNlibService.createIndex(ids, data, indexPath, parameters);
+            return;
+        }
+
         if (KNNEngine.FAISS.getName().equals(engineName)) {
             FaissService.createIndex(ids, data, indexPath, parameters);
             return;
@@ -88,6 +93,10 @@ public class JNIService {
             return FaissService.loadIndex(indexPath);
         }
 
+        if (KNNEngine.PYNN.getName().equals(engineName)) {
+            return PyNNlibService.loadIndex(indexPath, parameters);
+        }
+
         throw new IllegalArgumentException("LoadIndex not supported for provided engine");
     }
 
@@ -104,6 +113,10 @@ public class JNIService {
     public static KNNQueryResult[] queryIndex(long indexPointer, float[] queryVector, int k, String engineName, int[] filteredIds) {
         if (KNNEngine.NMSLIB.getName().equals(engineName)) {
             return NmslibService.queryIndex(indexPointer, queryVector, k);
+        }
+
+        if (KNNEngine.PYNN.getName().equals(engineName)) {
+            return PyNNlibService.queryIndex(indexPointer, queryVector, k);
         }
 
         if (KNNEngine.FAISS.getName().equals(engineName)) {
