@@ -71,6 +71,8 @@ public enum KNNEngine implements KNNLibrary {
      * @return KNNEngine corresponding to name
      */
     public static KNNEngine getEngine(String name) {
+        log.info("Name of pynn" + PYNN.getName());
+
         if (NMSLIB.getName().equalsIgnoreCase(name)) {
             return NMSLIB;
         }
@@ -86,8 +88,6 @@ public enum KNNEngine implements KNNLibrary {
         if (PYNN.getName().equalsIgnoreCase(name)) {
             return PYNN;
         }
-
-        log.info("Name of pynn" + PYNN.getName());
 
         throw new IllegalArgumentException(String.format("Invalid engine type: %s%s", name, PYNN.getName()));
     }
