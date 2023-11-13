@@ -50,7 +50,7 @@ class PyNNlibService {
 
         subInterp = new SharedInterpreter();
 
-        subInterp.eval("from pynd import *");
+        subInterp.eval("import pynndescent");
 
         subInterp.eval("import pickle");
 
