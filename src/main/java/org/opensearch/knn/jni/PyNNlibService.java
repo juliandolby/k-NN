@@ -53,9 +53,7 @@ class PyNNlibService {
         subInterp.eval("import pynndescent");
 
         subInterp.eval("import pickle");
-
-        subInterp.eval("import numpy as np");
-
+        
         subInterp.eval("indexes = {}");
 
         subInterp.eval("indexCounter = 0");
