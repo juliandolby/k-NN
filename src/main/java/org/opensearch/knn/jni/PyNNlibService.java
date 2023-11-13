@@ -73,9 +73,16 @@ class PyNNlibService {
      */
     public static void createIndex(int[] ids, float[][] data, String indexPath, Map<String, Object> parameters) {
         log.info("called create index with:" + indexPath);
-        subInterp.set("data", data);
-        subInterp.eval("data = np.array(data)");
-        subInterp.eval("index = pynndescent.NNDescent(data,metric='hamming')");
+        int x = 0;
+        float[] d = new float[data.length*data[0].length];
+        for (int i = 0; i < data.length; i++) {
+            for(int j = 0; j < data[i].length; j++) {
+                d[x++] = data[i][j];
+            }
+        }
+        NDArray<?> nd = new NDArray<float[]>(d, data.length, data[0].length);
+        subInterp.set("data", nd);
+        subInterp.eval("index = pynndescent.NNDescent(data)");
         subInterp.set("indexPath", indexPath);
         subInterp.eval("with open(indexPath, 'wb') as f:\n   pickle.dump(index, f)");
         log.info("finished create index with:");
@@ -105,9 +112,9 @@ class PyNNlibService {
      * @return KNNQueryResult array of k neighbors
      */
     public static KNNQueryResult[] queryIndex(long indexPointer, float[] queryVector, int k) {
-        subInterp.set("qv", queryVector);
+        NDArray<?> qv = new NDArray<float[]>(queryVector, 1, queryVector.length);
+        subInterp.set("queryVector", qv);
         subInterp.eval("index = indexes[" + indexPointer + "]");
-        subInterp.eval("queryVector = np.array([qv])");
         subInterp.eval("ans = index.query(queryVector)");
         List<NDArray<?>> result = (List<NDArray<?>>)subInterp.getValue("ans");
         assert result.size() == 2;
