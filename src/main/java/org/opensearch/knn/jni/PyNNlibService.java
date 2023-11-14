@@ -12,8 +12,11 @@
 package org.opensearch.knn.jni;
 
 import lombok.extern.log4j.Log4j2;
+import org.opensearch.knn.common.KNNConstants;
 import org.opensearch.knn.index.query.KNNQueryResult;
 
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Map;
 import java.util.Arrays;
 import java.util.List;
@@ -22,6 +25,8 @@ import jep.JepConfig;
 import jep.MainInterpreter;
 import jep.NDArray;
 import jep.SharedInterpreter;
+import org.opensearch.knn.index.util.KNNEngine;
+
 import java.util.*;
 
 /**
@@ -41,6 +46,12 @@ class PyNNlibService {
         // define the JEP library path
         String jepPath = "/data/anaconda3/envs/jep/lib/python3.11/site-packages/jep/libjep.so";
 
+        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                    System.loadLibrary(jepPath);
+                    KNNEngine.PYNN.setInitialized(true);
+                    return null;
+        });
+
         // initialize the MainInterpreter
         MainInterpreter.setJepLibraryPath(jepPath);
 
@@ -53,7 +64,7 @@ class PyNNlibService {
         subInterp.eval("import pynndescent");
 
         subInterp.eval("import pickle");
-        
+
         subInterp.eval("indexes = {}");
 
         subInterp.eval("indexCounter = 0");
