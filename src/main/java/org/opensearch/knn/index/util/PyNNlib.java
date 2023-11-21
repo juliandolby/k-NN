@@ -26,7 +26,7 @@ import static org.opensearch.knn.common.KNNConstants.METHOD_PARAMETER_M;
 class PyNNlib extends NativeLibrary {
 
     // Extension to be used for Nmslib files. It is ".hnsw" and not ".nmslib" for legacy purposes.
-    final static String EXTENSION = ".pnn";
+    final static String EXTENSION = ".pynn";
 
     final static String CURRENT_VERSION = "2023";
 

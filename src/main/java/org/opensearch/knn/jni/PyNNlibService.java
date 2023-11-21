@@ -12,21 +12,9 @@
 package org.opensearch.knn.jni;
 
 import lombok.extern.log4j.Log4j2;
-import org.opensearch.knn.common.KNNConstants;
 import org.opensearch.knn.index.query.KNNQueryResult;
 
-import java.security.AccessController;
-import java.security.PrivilegedAction;
-import java.util.Map;
-import java.util.Arrays;
-import java.util.List;
-
-import jep.JepConfig;
-import jep.MainInterpreter;
-import jep.NDArray;
-import jep.SharedInterpreter;
-import org.opensearch.knn.index.util.KNNEngine;
-
+import org.json.*;
 import java.util.*;
 
 /**
@@ -40,38 +28,6 @@ import java.util.*;
 @Log4j2
 class PyNNlibService {
 
-    private static SharedInterpreter subInterp;
-    static {
-
-        // define the JEP library path
-        String jepPath = "/data/anaconda3/envs/jep/lib/python3.11/site-packages/jep/libjep.so";
-
-        AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
-                    System.loadLibrary(jepPath);
-                    KNNEngine.PYNN.setInitialized(true);
-                    return null;
-        });
-
-        // initialize the MainInterpreter
-        MainInterpreter.setJepLibraryPath(jepPath);
-
-        jep.JepConfig jepConf = new JepConfig();
-
-        SharedInterpreter.setConfig(jepConf);
-
-        subInterp = new SharedInterpreter();
-
-        subInterp.eval("import pynndescent");
-
-        subInterp.eval("import pickle");
-
-        subInterp.eval("indexes = {}");
-
-        subInterp.eval("indexCounter = 0");
-
-
-    }
-
     /**
      * Create an index for the native library
      *
@@ -82,19 +38,16 @@ class PyNNlibService {
      */
     public static void createIndex(int[] ids, float[][] data, String indexPath, Map<String, Object> parameters) {
         log.info("called create index with:" + indexPath);
-        int x = 0;
-        float[] d = new float[data.length*data[0].length];
-        for (int i = 0; i < data.length; i++) {
-            for(int j = 0; j < data[i].length; j++) {
-                d[x++] = data[i][j];
-            }
-        }
-        NDArray<?> nd = new NDArray<float[]>(d, data.length, data[0].length);
-        subInterp.set("data", nd);
-        subInterp.eval("index = pynndescent.NNDescent(data)");
-        subInterp.set("indexPath", indexPath);
-        subInterp.eval("with open(indexPath, 'wb') as f:\n   pickle.dump(index, f)");
-        log.info("finished create index with:");
+
+        Map<String, Object> post = new LinkedHashMap<>();
+        post.put("data", data);
+        post.put("indexPath", indexPath);
+
+        log.info(post);
+
+        JSONObject code = TestClient.post("http://localhost:5000/create_index", post);
+
+        log.info("done" + code);
     }
 
     /**
@@ -105,11 +58,12 @@ class PyNNlibService {
      * @return pointer to location in memory the index resides in
      */
     public static long loadIndex(String indexPath, Map<String, Object> parameters) {
-        subInterp.set("indexPath", indexPath);
-        subInterp.eval("indexCounter += 1");
-        subInterp.eval("with open(indexPath, 'rb') as f:\n   indexes[indexCounter] = pickle.load(f)");
-        subInterp.eval("index.prepare()");
-        return ((Number)subInterp.getValue("indexCounter")).longValue();
+        Map<String, Object> post = new LinkedHashMap<>();
+        post.put("indexPath", indexPath);
+
+        JSONObject resp = TestClient.post("http://localhost:5000/load_index", post);
+
+        return resp.getInt("indexPointer");
     }
 
     /**
@@ -121,25 +75,22 @@ class PyNNlibService {
      * @return KNNQueryResult array of k neighbors
      */
     public static KNNQueryResult[] queryIndex(long indexPointer, float[] queryVector, int k) {
-        NDArray<?> qv = new NDArray<float[]>(queryVector, 1, queryVector.length);
-        subInterp.set("queryVector", qv);
-        subInterp.eval("index = indexes[" + indexPointer + "]");
-        subInterp.eval("ans = index.query(queryVector)");
-        List<NDArray<?>> result = (List<NDArray<?>>)subInterp.getValue("ans");
-        assert result.size() == 2;
-        int nodes = result.get(0).getDimensions()[0];
-        int neighbors = result.get(0).getDimensions()[1];
-        KNNQueryResult[][] answers = new KNNQueryResult[nodes][];
-        for (int i = 0; i < nodes; i++) {
-            KNNQueryResult[] elts = answers[i] = new KNNQueryResult[neighbors];
-            for (int j = 0; j < neighbors; j++) {
-                elts[j] = new KNNQueryResult(
-                    ((int[]) result.get(0).getData())[i * neighbors + j],
-                    ((float[]) result.get(1).getData())[i * neighbors + j]
-                );
-            }
+        Map<String, Object> post = new LinkedHashMap<>();
+        post.put("indexPointer", indexPointer);
+        post.put("queryVector", queryVector);
+        post.put("k", k);
+
+        JSONObject resp = TestClient.post("http://localhost:5000/load_index", post);
+
+        JSONArray neighbors = resp.getJSONArray("neighbor_answers");
+        JSONArray distances = resp.getJSONArray("distances");
+
+        KNNQueryResult[] answer = new KNNQueryResult[neighbors.length()];
+        for (int i = 0; i < neighbors.length(); i++) {
+            answer[i] = new KNNQueryResult(neighbors.getInt(i), distances.getFloat(i));
         }
-        return answers[0];
+
+        return answer;
     }
 
     /**

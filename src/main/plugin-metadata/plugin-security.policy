@@ -1,5 +1,10 @@
 grant {
+    permission java.lang.RuntimePermission "*";
+    permission java.lang.RuntimePermission "loadLibrary.*";
     permission java.lang.RuntimePermission "loadLibrary.opensearchknn_nmslib";
     permission java.lang.RuntimePermission "loadLibrary.opensearchknn_faiss";
     permission java.net.SocketPermission "*", "connect,resolve";
+    permission java.net.URLPermission "http://localhost:5000/create_index", "POST:Accept,Content-Type";
+    permission java.net.URLPermission "http://localhost:5000/load_index", "POST";
+    permission java.net.URLPermission "http://localhost:5000/query_index", "POST";
 };

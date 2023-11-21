@@ -181,6 +181,7 @@ dependencies {
     testImplementation group: 'net.bytebuddy', name: 'byte-buddy-agent', version: '1.14.7'
     testFixturesImplementation "org.opensearch:common-utils:${version}"
     implementation group: 'com.fasterxml.jackson.core', name: 'jackson-databind', version: '2.0.1'
+    implementation group: 'com.fasterxml.jackson.core', name: 'jackson-annotations', version: '2.0.1'
     implementation group: 'org.json', name: 'json', version: '20231013'
 }
 
@@ -344,6 +345,7 @@ task updateVersion {
 task fatJar(type: Jar) {
     archiveBaseName = "${rootProject.name}"
     duplicatesStrategy = 'exclude'
+    exclude("META-INF/*")
     from { configurations.compileClasspath.collect { it.isDirectory() ? it : zipTree(it) } }
     with jar
 }
