@@ -5,6 +5,8 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.concurrent.CompletionException;
@@ -14,6 +16,8 @@ import org.json.*;
 import com.fasterxml.jackson.core.type.TypeReference;
 
 import lombok.extern.log4j.Log4j2;
+import org.opensearch.knn.common.KNNConstants;
+import org.opensearch.knn.index.util.KNNEngine;
 
 @Log4j2
 public class TestClient {
@@ -55,7 +59,11 @@ public class TestClient {
 
             log.info("made req");
 
-            HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+            AccessController.doPrivileged((PrivilegedAction<Void>) () -> {
+                HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+            });
+            // HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
 
             log.info("sent");
 
@@ -67,7 +75,7 @@ public class TestClient {
             JSONObject resp = new JSONObject(tok);
 
             return resp;
-        } catch (Exception e) {
+        } catch (Throwable e) {
             log.info("post failed", e);
             return null;
         }
